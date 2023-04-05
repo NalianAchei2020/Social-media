@@ -1,0 +1,19 @@
+.upload{
+    width: 100%;
+    height: 750%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.upload-form{
+    display:flex;
+    flex-direction: column;
+}
+.form-items{
+    margin: 10px;
+    width: 400px;
+    height: 50px;
+    font-size: 20px;
+}
