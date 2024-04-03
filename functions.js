@@ -1,51 +1,104 @@
+const fs = require('fs');
 const { exec } = require('child_process');
-const commitMessages = require('./commitMessages');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
-function getDateString(date) {
-  return `${date.getFullYear()}-${(date.getMonth() + 1)
-    .toString()
-    .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date
-    .getHours()
-    .toString()
-    .padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date
-    .getSeconds()
-    .toString()
-    .padStart(2, '0')}`;
-}
+const commitMessages = [
+  'Add user authentication system',
+  'Implement password hashing',
+  'Update API documentation',
+  'Fix user registration bug',
+  'Add email verification',
+  'Optimize database queries',
+  'Implement rate limiting',
+  'Add input validation',
+  'Update security headers',
+  'Fix CORS configuration',
+  'Add error logging',
+  'Implement caching layer',
+  'Update dependencies',
+  'Add unit tests',
+  'Implement API versioning',
+  'Add request validation',
+  'Optimize performance',
+  'Fix memory leak',
+  'Add health check endpoint',
+  'Update error handling',
+  'Add integration tests',
+  'Implement monitoring',
+  'Add metrics collection',
+  'Update CI/CD pipeline',
+  'Fix security vulnerability',
+  'Add data encryption',
+  'Implement backup system',
+  'Update logging system',
+  'Add load balancing',
+  'Fix connection pooling',
+];
 
-function backDateCommit(date, message) {
-  exec(
-    `git commit --date="${getDateString(date)}" -m "${message}"`,
-    (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        return;
-      }
-      console.log(`add sum function: ${message}`);
-    }
+const generateRandomCommit = () => {
+  const baseMessages = commitMessages.map((msg) => ({
+    type: ['feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore'][
+      Math.floor(Math.random() * 7)
+    ],
+    message: msg,
+  }));
+
+  return baseMessages.map(({ type, message }) => `${type}: ${message}`);
+};
+
+const createRandomFile = async (index) => {
+  const fileName = `temp-${index}.txt`;
+  const content = `Temporary file ${index} - ${new Date().toISOString()}`;
+
+  await fs.promises.writeFile(fileName, content);
+  return fileName;
+};
+
+const getRandomDate = (startDate, endDate) => {
+  return new Date(
+    startDate.getTime() +
+      Math.random() * (endDate.getTime() - startDate.getTime())
   );
-}
+};
 
-function createBackDatedCommits(startDate, count) {
-  const commits = [];
-  let index = 0;
+const generateCommits = async (numberOfCommits = 200) => {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 1); // 1 day ago
 
-  function createCommit() {
-    if (index >= count) return; // Stop if count is reached
+  const commits = generateRandomCommit();
 
-    const date = new Date(startDate.getTime() + index * 60 * 1000);
-    const message = commitMessages[index % commitMessages.length];
+  for (let i = 0; i < numberOfCommits; i++) {
+    try {
+      // Create a random file
+      const fileName = await createRandomFile(i);
 
-    backDateCommit(date, message);
-    commits.push(message);
-    index++;
+      // Generate random date
+      const date = getRandomDate(startDate, endDate);
+      const dateString = date.toISOString();
 
-    // Add a delay of 1 second before the next commit
-    setTimeout(createCommit, 1000); // 1000 ms = 1 second
+      // Stage, commit with backdated timestamp, and cleanup
+      await execAsync(`git add ${fileName}`);
+      await execAsync(
+        `GIT_AUTHOR_DATE='${dateString}' GIT_COMMITTER_DATE='${dateString}' git commit -m "${
+          commits[i % commits.length]
+        }"`
+      );
+      await fs.promises.unlink(fileName);
+
+      console.log(`Created commit ${i + 1}/${numberOfCommits}`);
+    } catch (error) {
+      console.error(`Error creating commit ${i + 1}:`, error);
+    }
   }
 
-  createCommit(); // Start the commit process
-  return commits;
-}
+  try {
+    await execAsync('git push origin main --force');
+    console.log('Successfully pushed all commits');
+  } catch (error) {
+    console.error('Error pushing commits:', error);
+  }
+};
 
-module.exports = { createBackDatedCommits };
+module.exports = { generateCommits };
