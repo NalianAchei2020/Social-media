@@ -1,5 +1,5 @@
 const { exec } = require('child_process');
-const fs = require('fs');
+const commitMessages = require('./commitMessages');
 
 function getDateString(date) {
   return `${date.getFullYear()}-${(date.getMonth() + 1)
@@ -15,7 +15,7 @@ function getDateString(date) {
 
 function backDateCommit(date, message) {
   exec(
-    `git commit --amend --date="${getDateString(date)}" -m "${message}"`,
+    `git commit --date="${getDateString(date)}" -m "${message}"`,
     (error, stdout, stderr) => {
       if (error) {
         console.error(`exec error: ${error}`);
@@ -28,12 +28,23 @@ function backDateCommit(date, message) {
 
 function createBackDatedCommits(startDate, count) {
   const commits = [];
-  for (let i = 0; i < count; i++) {
-    const date = new Date(startDate.getTime() + i * 60 * 1000);
-    const message = `add sum function ${i + 1}`;
+  let index = 0;
+
+  function createCommit() {
+    if (index >= count) return; // Stop if count is reached
+
+    const date = new Date(startDate.getTime() + index * 60 * 1000);
+    const message = commitMessages[index % commitMessages.length];
+
     backDateCommit(date, message);
     commits.push(message);
+    index++;
+
+    // Add a delay of 1 second before the next commit
+    setTimeout(createCommit, 1000); // 1000 ms = 1 second
   }
+
+  createCommit(); // Start the commit process
   return commits;
 }
 
