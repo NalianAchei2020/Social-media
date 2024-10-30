@@ -19,17 +19,26 @@ function createRandomFile(index) {
   return filename;
 }
 
-// Function to commit with a backdated date
+// Function to commit with a backdated date and error handling
 async function commitWithBackdate(filename, message, daysAgo) {
   const commitDate = new Date(startDate);
   commitDate.setDate(commitDate.getDate() + daysAgo); // Calculate the exact commit date
-  await git.add(filename);
-  await git.commit(message, {
-    '--date': commitDate.toISOString(),
-  });
+
+  try {
+    // Stage the file
+    await git.add(filename);
+    console.log(`Staged: ${filename}`);
+
+    // Commit the file
+    await git.commit(message, { '--date': commitDate.toISOString() });
+    console.log(`Committed: ${message} on ${commitDate.toISOString()}`);
+  } catch (error) {
+    // Handle any errors during the git commit process
+    console.error(`Error during commit: ${error.message}`);
+  }
 }
 
-// Function to create files, commit, and push backdated commits
+// Function to create files and commit backdated commits (no push)
 async function makeBackdatedCommits() {
   const numberOfCommits = 200; // Total number of commits
   const commitsPerDay = Math.ceil(numberOfCommits / totalDays); // Calculate how many commits per day
@@ -47,16 +56,10 @@ async function makeBackdatedCommits() {
       await commitWithBackdate(filename, message, i);
 
       commitCount++;
-      console.log(
-        `Committed: ${message} - Date: ${new Date(
-          startDate.getTime() + i * 24 * 60 * 60 * 1000
-        ).toISOString()}`
-      );
     }
   }
 
-  // Push the commits to the remote repository
-  await git.push('origin', 'main');
+  console.log('All commits have been made. You can push them manually.');
 }
 
 // Start the process
