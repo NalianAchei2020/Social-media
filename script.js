@@ -1,14 +1,13 @@
-const { createBackDatedCommits } = require('./functions');
+const { generateCommits } = require('./functions');
 
-// Set the desired start date and number of commits
-const startDate = new Date('2024-04-02T00:00:00');
-const numCommits = 200;
+const main = async () => {
+  try {
+    await generateCommits(200);
+    console.log('Commit generation completed successfully');
+  } catch (error) {
+    console.error('Error generating commits:', error);
+    process.exit(1);
+  }
+};
 
-// Create the backdated commits
-const commits = createBackDatedCommits(startDate, numCommits);
-
-// Print the list of created commits
-console.log('Created the following backdated commits:');
-commits.forEach((commit, index) => {
-  console.log(`${index + 1}. ${commit}`);
-});
+main();
